@@ -48,6 +48,8 @@ type StatisticsAccumulated struct {
 	ByteSendDrop      uint64 // Same as pktSendDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvDrop      uint64 // Same as pktRecvDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvUndecrypt uint64 // Same as pktRecvUndecrypt, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
+	PktRecvLost       uint64
+	PktRecvDelivered  uint64
 }
 
 type StatisticsInterval struct {
@@ -88,6 +90,8 @@ type StatisticsInterval struct {
 	ByteSendDrop      uint64 // Same as pktSendDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvDrop      uint64 // Same as pktRecvDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvUndecrypt uint64 // Same as pktRecvUndecrypt, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
+	PktRecvLost       uint64
+	PktRecvDelivered  uint64
 }
 
 type StatisticsInstantaneous struct {

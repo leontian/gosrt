@@ -376,10 +376,14 @@ func (r *receiver) Tick(now uint64) {
 		if p.Header().PacketSequenceNumber.Lte(r.lastACKSequenceNumber) && p.Header().PktTsbpdTime <= now {
 			r.statistics.PktBuf--
 			r.statistics.ByteBuf -= p.Len()
-
+			dist := p.Header().PacketSequenceNumber.Distance(r.lastDeliveredSequenceNumber)
+			if dist > 1 {
+				r.statistics.PktLost += uint64(dist - 1)
+			}
 			r.lastDeliveredSequenceNumber = p.Header().PacketSequenceNumber
 
 			r.deliver(p)
+			r.statistics.PktDelivered++
 			removeList = append(removeList, e)
 		} else {
 			break

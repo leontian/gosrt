@@ -121,4 +121,7 @@ type ReceiveStats struct {
 	MbpsEstimatedLinkCapacity  float64
 
 	PktLossRate float64
+
+	PktDelivered uint64
+	PktLost      uint64
 }
