@@ -101,6 +101,13 @@ func (r *rtt) RTTVar() float64 {
 	return r.rttVar
 }
 
+func (r *rtt) RttAndRttVar() (float64, float64) {
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+
+	return r.rtt, r.rttVar
+}
+
 func (r *rtt) NAKInterval() float64 {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
@@ -1441,11 +1448,9 @@ func (c *srtConn) Stats(s *Statistics) {
 	interval := now - s.MsTimeStamp
 
 	c.statisticsLock.RLock()
-	c.rtt.lock.RLock()
-	defer func() {
-		c.statisticsLock.RUnlock()
-		c.rtt.lock.RUnlock()
-	}()
+	defer c.statisticsLock.RUnlock()
+
+	rtt, rttVar := c.rtt.RttAndRttVar()
 
 	// Accumulated
 	s.Accumulated = StatisticsAccumulated{
@@ -1479,8 +1484,8 @@ func (c *srtConn) Stats(s *Statistics) {
 		ByteSendDrop:      send.ByteDrop + (send.PktDrop * c.statistics.headerSize),
 		ByteRecvDrop:      recv.ByteDrop + (recv.PktDrop * c.statistics.headerSize),
 		ByteRecvUndecrypt: c.statistics.byteRecvUndecrypt + (c.statistics.pktRecvUndecrypt * c.statistics.headerSize),
-		Rtt:               c.rtt.rtt,
-		RttVar:            c.rtt.rttVar,
+		Rtt:               rtt,
+		RttVar:            rttVar,
 	}
 
 	// Interval
@@ -1526,7 +1531,7 @@ func (c *srtConn) Stats(s *Statistics) {
 		UsPktSendPeriod:       send.UsPktSndPeriod,
 		PktFlowWindow:         uint64(c.config.FC),
 		PktFlightSize:         send.PktFlightSize,
-		MsRTT:                 c.rtt.RTT() / 1000,
+		MsRTT:                 rtt / 1000,
 		MbpsSentRate:          send.MbpsEstimatedSentBandwidth,
 		MbpsRecvRate:          recv.MbpsEstimatedRecvBandwidth,
 		MbpsLinkCapacity:      recv.MbpsEstimatedLinkCapacity,
@@ -1546,7 +1551,7 @@ func (c *srtConn) Stats(s *Statistics) {
 		PktRecvAvgBelatedTime: 0,
 		PktSendLossRate:       send.PktLossRate,
 		PktRecvLossRate:       recv.PktLossRate,
-		RttVar:                c.rtt.rttVar,
+		RttVar:                rttVar,
 	}
 
 	// If we're only sending, the receiver congestion control value for the link capacity is zero,
