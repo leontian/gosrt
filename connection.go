@@ -1484,8 +1484,6 @@ func (c *srtConn) Stats(s *Statistics) {
 		ByteSendDrop:      send.ByteDrop + (send.PktDrop * c.statistics.headerSize),
 		ByteRecvDrop:      recv.ByteDrop + (recv.PktDrop * c.statistics.headerSize),
 		ByteRecvUndecrypt: c.statistics.byteRecvUndecrypt + (c.statistics.pktRecvUndecrypt * c.statistics.headerSize),
-		Rtt:               rtt,
-		RttVar:            rttVar,
 	}
 
 	// Interval

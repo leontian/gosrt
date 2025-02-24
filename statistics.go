@@ -50,8 +50,6 @@ type StatisticsAccumulated struct {
 	ByteRecvUndecrypt uint64 // Same as pktRecvUndecrypt, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	PktRecvLost       uint64
 	PktRecvDelivered  uint64
-	Rtt               float64
-	RttVar            float64
 }
 
 type StatisticsInterval struct {
