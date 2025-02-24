@@ -1519,8 +1519,6 @@ func (c *srtConn) Stats(s *Statistics) {
 		ByteSendDrop:       s.Accumulated.ByteSendDrop - previous.ByteSendDrop,
 		ByteRecvDrop:       s.Accumulated.ByteRecvDrop - previous.ByteRecvDrop,
 		ByteRecvUndecrypt:  s.Accumulated.ByteRecvUndecrypt - previous.ByteRecvUndecrypt,
-		Rtt:                s.Accumulated.Rtt - previous.Rtt,
-		RttVar:             s.Accumulated.RttVar - previous.RttVar,
 	}
 
 	// Instantaneous
@@ -1548,6 +1546,7 @@ func (c *srtConn) Stats(s *Statistics) {
 		PktRecvAvgBelatedTime: 0,
 		PktSendLossRate:       send.PktLossRate,
 		PktRecvLossRate:       recv.PktLossRate,
+		RttVar:                c.rtt.rttVar,
 	}
 
 	// If we're only sending, the receiver congestion control value for the link capacity is zero,
