@@ -1441,7 +1441,11 @@ func (c *srtConn) Stats(s *Statistics) {
 	interval := now - s.MsTimeStamp
 
 	c.statisticsLock.RLock()
-	defer c.statisticsLock.RUnlock()
+	c.rtt.lock.RLock()
+	defer func() {
+		c.statisticsLock.RUnlock()
+		c.rtt.lock.RUnlock()
+	}()
 
 	// Accumulated
 	s.Accumulated = StatisticsAccumulated{
@@ -1475,6 +1479,8 @@ func (c *srtConn) Stats(s *Statistics) {
 		ByteSendDrop:      send.ByteDrop + (send.PktDrop * c.statistics.headerSize),
 		ByteRecvDrop:      recv.ByteDrop + (recv.PktDrop * c.statistics.headerSize),
 		ByteRecvUndecrypt: c.statistics.byteRecvUndecrypt + (c.statistics.pktRecvUndecrypt * c.statistics.headerSize),
+		Rtt:               c.rtt.rtt,
+		RttVar:            c.rtt.rttVar,
 	}
 
 	// Interval
@@ -1513,6 +1519,8 @@ func (c *srtConn) Stats(s *Statistics) {
 		ByteSendDrop:       s.Accumulated.ByteSendDrop - previous.ByteSendDrop,
 		ByteRecvDrop:       s.Accumulated.ByteRecvDrop - previous.ByteRecvDrop,
 		ByteRecvUndecrypt:  s.Accumulated.ByteRecvUndecrypt - previous.ByteRecvUndecrypt,
+		Rtt:                s.Accumulated.Rtt - previous.Rtt,
+		RttVar:             s.Accumulated.RttVar - previous.RttVar,
 	}
 
 	// Instantaneous
