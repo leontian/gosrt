@@ -118,5 +118,5 @@ type StatisticsInstantaneous struct {
 	PktRecvAvgBelatedTime uint64  // Accumulated difference between the current time and the time-to-play of a packet that is received late
 	PktSendLossRate       float64 // Percentage of resent data vs. sent data
 	PktRecvLossRate       float64 // Percentage of retransmitted data vs. received data
-	RttVar                float64
+	MsRttVar              float64
 }

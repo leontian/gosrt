@@ -1549,7 +1549,7 @@ func (c *srtConn) Stats(s *Statistics) {
 		PktRecvAvgBelatedTime: 0,
 		PktSendLossRate:       send.PktLossRate,
 		PktRecvLossRate:       recv.PktLossRate,
-		RttVar:                rttVar,
+		MsRttVar:              rttVar / 1000,
 	}
 
 	// If we're only sending, the receiver congestion control value for the link capacity is zero,
