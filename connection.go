@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 	"net"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -304,6 +305,7 @@ func newSRTConn(config srtConnConfig) *srtConn {
 		c.log("connection:close", func() string {
 			return fmt.Sprintf("no more data received from peer for %s. shutting down", c.config.PeerIdleTimeout)
 		})
+		fmt.Println(fmt.Sprintf("RR debug - no more data received from peer for %s. shutting down", c.config.PeerIdleTimeout))
 		go c.close()
 	})
 
@@ -429,6 +431,7 @@ func (c *srtConn) ReadPacket() (packet.Packet, error) {
 	var p packet.Packet
 	select {
 	case <-c.ctx.Done():
+		fmt.Println("RR Debug - ctx.Done() ln 425 - connection.go. returning EOF")
 		return nil, io.EOF
 	case p = <-c.readQueue:
 	}
@@ -441,6 +444,10 @@ func (c *srtConn) ReadPacket() (packet.Packet, error) {
 		c.log("connection:error", func() string {
 			return fmt.Sprintf("packet out of order. got: %d, expected: %d (%d)", p.Header().PacketSequenceNumber.Val(), c.debug.expectedReadPacketSequenceNumber.Val(), c.debug.expectedReadPacketSequenceNumber.Distance(p.Header().PacketSequenceNumber))
 		})
+		fmt.Println(fmt.Sprintf("RR Debug - packet out of order. got: %d, expected: %d (%d)",
+			p.Header().PacketSequenceNumber.Val(),
+			c.debug.expectedReadPacketSequenceNumber.Val(),
+			c.debug.expectedReadPacketSequenceNumber.Distance(p.Header().PacketSequenceNumber)))
 		return nil, io.EOF
 	}
 
@@ -1399,6 +1406,10 @@ func (c *srtConn) Close() error {
 
 // close closes the connection.
 func (c *srtConn) close() {
+
+	buf := make([]byte, 128<<10)
+	stackSize := runtime.Stack(buf, false)
+	fmt.Println("RR debug - connection:close with backrtrace", string(buf[:stackSize]))
 
 	c.shutdownOnce.Do(func() {
 		c.log("connection:close", func() string { return "stopping peer idle timeout" })
