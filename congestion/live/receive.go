@@ -235,7 +235,7 @@ func (r *receiver) Push(pkt packet.Packet) {
 		// here we can prevent a possibly unnecessary NAK with SRTO_LOXXMAXTTL
 		r.sendNAK(r.maxSeenSequenceNumber.Inc(), pkt.Header().PacketSequenceNumber.Dec())
 
-		len := uint64(pkt.Header().PacketSequenceNumber.Distance(r.maxSeenSequenceNumber))
+		len := uint64(pkt.Header().PacketSequenceNumber.Distance(r.maxSeenSequenceNumber.Inc()))
 		r.statistics.PktLoss += len
 		r.statistics.ByteLoss += len * uint64(r.avgPayloadSize)
 

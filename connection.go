@@ -647,6 +647,27 @@ func (c *srtConn) handlePacket(p packet.Packet) {
 
 	header := p.Header()
 
+	// 4.5.1.1.  TSBPD Time Base Calculation
+	if !c.tsbpdWrapPeriod {
+		if header.Timestamp > packet.MAX_TIMESTAMP-(30*1000000) {
+			c.tsbpdWrapPeriod = true
+			c.log("connection:tsbpd", func() string { return "TSBPD wrapping period started" })
+		}
+	} else {
+		if header.Timestamp >= (30*1000000) && header.Timestamp <= (60*1000000) {
+			c.tsbpdWrapPeriod = false
+			c.tsbpdTimeBaseOffset += uint64(packet.MAX_TIMESTAMP) + 1
+			c.log("connection:tsbpd", func() string { return "TSBPD wrapping period finished" })
+		}
+	}
+
+	tsbpdTimeBaseOffset := c.tsbpdTimeBaseOffset
+	if c.tsbpdWrapPeriod {
+		if header.Timestamp < (30 * 1000000) {
+			tsbpdTimeBaseOffset += uint64(packet.MAX_TIMESTAMP) + 1
+		}
+	}
+
 	if header.IsControlPacket {
 		if header.ControlType == packet.CTRLTYPE_KEEPALIVE {
 			c.handleKeepAlive(p)
@@ -699,27 +720,6 @@ func (c *srtConn) handlePacket(p packet.Packet) {
 	if header.MessageNumber == 0 {
 		c.log("connection:filter", func() string { return "dropped FEC filter control packet" })
 		return
-	}
-
-	// 4.5.1.1.  TSBPD Time Base Calculation
-	if !c.tsbpdWrapPeriod {
-		if header.Timestamp > packet.MAX_TIMESTAMP-(30*1000000) {
-			c.tsbpdWrapPeriod = true
-			c.log("connection:tsbpd", func() string { return "TSBPD wrapping period started" })
-		}
-	} else {
-		if header.Timestamp >= (30*1000000) && header.Timestamp <= (60*1000000) {
-			c.tsbpdWrapPeriod = false
-			c.tsbpdTimeBaseOffset += uint64(packet.MAX_TIMESTAMP) + 1
-			c.log("connection:tsbpd", func() string { return "TSBPD wrapping period finished" })
-		}
-	}
-
-	tsbpdTimeBaseOffset := c.tsbpdTimeBaseOffset
-	if c.tsbpdWrapPeriod {
-		if header.Timestamp < (30 * 1000000) {
-			tsbpdTimeBaseOffset += uint64(packet.MAX_TIMESTAMP) + 1
-		}
 	}
 
 	header.PktTsbpdTime = c.tsbpdTimeBase + tsbpdTimeBaseOffset + uint64(header.Timestamp) + c.tsbpdDelay + c.tsbpdDrift
