@@ -108,12 +108,12 @@ func (r *rtt) RttAndRttVar() (float64, float64) {
 	return r.rtt, r.rttVar
 }
 
-func (r *rtt) NAKInterval() float64 {
+func (r *rtt) NAKInterval(multiplier float64) float64 {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	// 4.8.2.  Packet Retransmission (NAKs)
-	nakInterval := (r.rtt + 4*r.rttVar) / 2
+	nakInterval := (r.rtt + 4*r.rttVar) * multiplier
 	if nakInterval < 20000 {
 		nakInterval = 20000 // 20ms
 	}
@@ -865,7 +865,7 @@ func (c *srtConn) handleACKACK(p packet.Packet) {
 
 	c.ackLock.Unlock()
 
-	c.recv.SetNAKInterval(uint64(c.rtt.NAKInterval()))
+	c.recv.SetNAKInterval(uint64(c.rtt.NAKInterval(c.config.NAKIntervalMultiplier)))
 }
 
 // recalculateRTT recalculates the RTT based on a full ACK exchange
@@ -873,7 +873,7 @@ func (c *srtConn) recalculateRTT(rtt time.Duration) {
 	c.rtt.Recalculate(rtt)
 
 	c.log("connection:rtt", func() string {
-		return fmt.Sprintf("RTT=%.0fus RTTVar=%.0fus NAKInterval=%.0fms", c.rtt.RTT(), c.rtt.RTTVar(), c.rtt.NAKInterval()/1000)
+		return fmt.Sprintf("RTT=%.0fus RTTVar=%.0fus NAKInterval=%.0fms", c.rtt.RTT(), c.rtt.RTTVar(), c.rtt.NAKInterval(c.config.NAKIntervalMultiplier)/1000)
 	})
 }
 

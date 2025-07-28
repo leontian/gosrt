@@ -169,6 +169,9 @@ type Config struct {
 
 	// An implementation of the Logger interface
 	Logger Logger
+
+	// periodic NAK frequency adjustment
+	NAKIntervalMultiplier float64
 }
 
 // DefaultConfig is the default configuration for a SRT connection
@@ -209,6 +212,7 @@ var defaultConfig Config = Config{
 	TooLatePacketDrop:     true,
 	TransmissionType:      "live",
 	TSBPDMode:             true,
+	NAKIntervalMultiplier: 0.5,
 }
 
 // DefaultConfig returns the default configuration for Dial and Listen.
