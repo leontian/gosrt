@@ -190,6 +190,10 @@ func (r *receiver) Push(pkt packet.Packet) {
 		r.statistics.PktDrop++
 		r.statistics.ByteDrop += pktLen
 
+		if !pkt.Header().RetransmittedPacketFlag {
+			r.statistics.PktOOO++
+		}
+
 		return
 	}
 
@@ -197,6 +201,9 @@ func (r *receiver) Push(pkt packet.Packet) {
 		// Already acknowledged, ignoring
 		r.statistics.PktDrop++
 		r.statistics.ByteDrop += pktLen
+		if !pkt.Header().RetransmittedPacketFlag {
+			r.statistics.PktOOO++
+		}
 
 		return
 	}
@@ -213,6 +220,9 @@ func (r *receiver) Push(pkt packet.Packet) {
 				// Already received (has been sent more than once), ignoring
 				r.statistics.PktDrop++
 				r.statistics.ByteDrop += pktLen
+				if !pkt.Header().RetransmittedPacketFlag {
+					r.statistics.PktOOO++
+				}
 
 				break
 			} else if p.Header().PacketSequenceNumber.Gt(pkt.Header().PacketSequenceNumber) {
@@ -222,6 +232,9 @@ func (r *receiver) Push(pkt packet.Packet) {
 
 				r.statistics.ByteBuf += pktLen
 				r.statistics.ByteUnique += pktLen
+				if !pkt.Header().RetransmittedPacketFlag {
+					r.statistics.PktOOO++
+				}
 
 				r.packetList.InsertBefore(pkt, e)
 

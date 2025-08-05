@@ -110,6 +110,8 @@ type ReceiveStats struct {
 	PktDrop  uint64
 	ByteDrop uint64
 
+	PktOOO uint64
+
 	// instantaneous
 	PktBuf  uint64
 	ByteBuf uint64

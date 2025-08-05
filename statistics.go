@@ -48,8 +48,9 @@ type StatisticsAccumulated struct {
 	ByteSendDrop      uint64 // Same as pktSendDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvDrop      uint64 // Same as pktRecvDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvUndecrypt uint64 // Same as pktRecvUndecrypt, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
-	PktRecvLost       uint64
-	PktRecvDelivered  uint64
+	PktRecvLost       uint64 // The total number of lost DATA packets that are not recovered in time, and therefore not delivered to application
+	PktRecvDelivered  uint64 // The total number of packets that are delivered to application
+	PktRecvOOO        uint64 // The total number of packets received with a lower sequence number than expected, that are not retransmitted.
 }
 
 type StatisticsInterval struct {
@@ -90,8 +91,9 @@ type StatisticsInterval struct {
 	ByteSendDrop      uint64 // Same as pktSendDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvDrop      uint64 // Same as pktRecvDrop, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
 	ByteRecvUndecrypt uint64 // Same as pktRecvUndecrypt, but expressed in bytes, including payload and all the headers (IP, TCP, SRT)
-	PktRecvLost       uint64
-	PktRecvDelivered  uint64
+	PktRecvLost       uint64 // Number of lost DATA packets that are not recovered in time, and therefore not delivered to application
+	PktRecvDelivered  uint64 // Number of packets that are delivered to application
+	PktRecvOOO        uint64 // Number of packets received with a lower sequence number than expected, that are not retransmitted.
 }
 
 type StatisticsInstantaneous struct {
