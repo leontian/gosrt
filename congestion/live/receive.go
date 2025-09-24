@@ -333,13 +333,15 @@ func (r *receiver) periodicACK(now uint64) (ok bool, sequenceNumber circular.Num
 	return
 }
 
-func (r *receiver) periodicNAK(now uint64) (ok bool, list []circular.Number) {
+func (r *receiver) periodicNAK(now uint64) []circular.Number {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	if now-r.lastPeriodicNAK < r.periodicNAKInterval {
-		return
+		return nil
 	}
+
+	list := []circular.Number{}
 
 	// Send a periodic NAK
 
@@ -359,7 +361,6 @@ func (r *receiver) periodicNAK(now uint64) (ok bool, list []circular.Number) {
 		if !p.Header().PacketSequenceNumber.Equals(ackSequenceNumber.Inc()) {
 			nackSequenceNumber := ackSequenceNumber.Inc()
 
-			ok = true
 			list = append(list, nackSequenceNumber)
 			list = append(list, p.Header().PacketSequenceNumber.Dec())
 
@@ -371,7 +372,7 @@ func (r *receiver) periodicNAK(now uint64) (ok bool, list []circular.Number) {
 
 	r.lastPeriodicNAK = now
 
-	return
+	return list
 }
 
 func (r *receiver) Tick(now uint64) {
@@ -379,7 +380,7 @@ func (r *receiver) Tick(now uint64) {
 		r.sendACK(sequenceNumber, lite)
 	}
 
-	if ok, list := r.periodicNAK(now); ok {
+	if list := r.periodicNAK(now); len(list) != 0 {
 		r.sendNAK(list)
 	}
 
