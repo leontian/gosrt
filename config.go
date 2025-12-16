@@ -169,6 +169,9 @@ type Config struct {
 
 	// An implementation of the Logger interface
 	Logger Logger
+
+	// Retransmit oldest packet first
+	RexmitOldestFirst bool
 }
 
 // DefaultConfig is the default configuration for a SRT connection

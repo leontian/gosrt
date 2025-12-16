@@ -338,6 +338,7 @@ func newSRTConn(config srtConnConfig) *srtConn {
 		MinInputBW:            c.config.MinInputBW,
 		OverheadBW:            c.config.OverheadBW,
 		OnDeliver:             c.pop,
+		RexmitOldestFirst:     c.config.RexmitOldestFirst,
 	})
 
 	c.ctx, c.cancelCtx = context.WithCancel(context.Background())

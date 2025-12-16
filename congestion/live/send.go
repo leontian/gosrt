@@ -19,6 +19,7 @@ type SendConfig struct {
 	MinInputBW            int64
 	OverheadBW            int64
 	OnDeliver             func(p packet.Packet)
+	RexmitOldestFirst     bool
 }
 
 // sender implements the Sender interface
@@ -55,6 +56,8 @@ type sender struct {
 	}
 
 	deliver func(p packet.Packet)
+
+	rexmitOldestFirst bool
 }
 
 // NewSender takes a SendConfig and returns a new Sender
@@ -71,6 +74,8 @@ func NewSender(config SendConfig) congestion.Sender {
 		overheadBW:     float64(config.OverheadBW),
 
 		deliver: config.OnDeliver,
+
+		rexmitOldestFirst: config.RexmitOldestFirst,
 	}
 
 	if s.deliver == nil {
@@ -286,27 +291,53 @@ func (s *sender) NAK(sequenceNumbers []circular.Number) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	for e := s.lossList.Back(); e != nil; e = e.Prev() {
-		p := e.Value.(packet.Packet)
+	if s.rexmitOldestFirst {
+		for e := s.lossList.Front(); e != nil; e = e.Next() {
+			p := e.Value.(packet.Packet)
+			for i := 0; i < len(sequenceNumbers); i += 2 {
+				if p.Header().PacketSequenceNumber.Gte(sequenceNumbers[i]) && p.Header().PacketSequenceNumber.Lte(sequenceNumbers[i+1]) {
+					s.statistics.PktRetrans++
+					s.statistics.Pkt++
+					s.statistics.PktLoss++
 
-		for i := 0; i < len(sequenceNumbers); i += 2 {
-			if p.Header().PacketSequenceNumber.Gte(sequenceNumbers[i]) && p.Header().PacketSequenceNumber.Lte(sequenceNumbers[i+1]) {
-				s.statistics.PktRetrans++
-				s.statistics.Pkt++
-				s.statistics.PktLoss++
+					s.statistics.ByteRetrans += p.Len()
+					s.statistics.Byte += p.Len()
+					s.statistics.ByteLoss += p.Len()
 
-				s.statistics.ByteRetrans += p.Len()
-				s.statistics.Byte += p.Len()
-				s.statistics.ByteLoss += p.Len()
+					//  5.1.2. SRT's Default LiveCC Algorithm
+					s.avgPayloadSize = 0.875*s.avgPayloadSize + 0.125*float64(p.Len())
 
-				//  5.1.2. SRT's Default LiveCC Algorithm
-				s.avgPayloadSize = 0.875*s.avgPayloadSize + 0.125*float64(p.Len())
+					s.rate.bytesSent += p.Len()
+					s.rate.bytesRetrans += p.Len()
 
-				s.rate.bytesSent += p.Len()
-				s.rate.bytesRetrans += p.Len()
+					p.Header().RetransmittedPacketFlag = true
+					s.deliver(p)
+				}
+			}
+		}
+	} else {
+		for e := s.lossList.Back(); e != nil; e = e.Prev() {
+			p := e.Value.(packet.Packet)
 
-				p.Header().RetransmittedPacketFlag = true
-				s.deliver(p)
+			for i := 0; i < len(sequenceNumbers); i += 2 {
+				if p.Header().PacketSequenceNumber.Gte(sequenceNumbers[i]) && p.Header().PacketSequenceNumber.Lte(sequenceNumbers[i+1]) {
+					s.statistics.PktRetrans++
+					s.statistics.Pkt++
+					s.statistics.PktLoss++
+
+					s.statistics.ByteRetrans += p.Len()
+					s.statistics.Byte += p.Len()
+					s.statistics.ByteLoss += p.Len()
+
+					//  5.1.2. SRT's Default LiveCC Algorithm
+					s.avgPayloadSize = 0.875*s.avgPayloadSize + 0.125*float64(p.Len())
+
+					s.rate.bytesSent += p.Len()
+					s.rate.bytesRetrans += p.Len()
+
+					p.Header().RetransmittedPacketFlag = true
+					s.deliver(p)
+				}
 			}
 		}
 	}
