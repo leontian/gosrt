@@ -20,6 +20,7 @@ import (
 const MAX_SEQUENCENUMBER uint32 = 0b01111111_11111111_11111111_11111111
 const MAX_TIMESTAMP uint32 = 0b11111111_11111111_11111111_11111111
 const MAX_PAYLOAD_SIZE = 1456
+const MAX_NAK_PAYLOAD_SIZE = 1400
 
 // Table 1: SRT Control Packet Types
 type CtrlType uint16
@@ -1361,7 +1362,7 @@ func (c *CIFNAK) Marshal(w io.Writer) error {
 			bytesWritten += 8
 		}
 
-		if bytesWritten >= MAX_PAYLOAD_SIZE-4 {
+		if bytesWritten >= MAX_NAK_PAYLOAD_SIZE {
 			break
 		}
 	}
